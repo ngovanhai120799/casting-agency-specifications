@@ -6,7 +6,9 @@ from flask_cors import cross_origin
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound, HTTPException
 
-from models import Movie, db
+from api.decorator import requires_auth
+from models import Movie, db, Actor, Assistant
+
 movie_api = Blueprint("movie", __name__)
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -18,15 +20,24 @@ def after_request(response):
 
 @movie_api.route("/movies", methods=["GET"])
 @cross_origin()
+@requires_auth(permission="read:movie")
 def get_all_movies():
     list_movies = []
     movies = Movie.query.all()
     for movie in movies:
-        list_movies.append(movie.to_dict())
+        actors = [assistant.actor.to_dict() for assistant in movie.actors]
+        response = {
+            "id": movie.id,
+            "title": movie.title,
+            "release_date": movie.release_date,
+            "actors": actors
+        }
+        list_movies.append(response)
     return jsonify(list_movies)
 
 @movie_api.route("/movies", methods=["POST"])
 @cross_origin()
+@requires_auth(permission="create:movie")
 def create_movie():
     try:
         request_body = request.get_json()
@@ -42,10 +53,11 @@ def create_movie():
         return jsonify(movie.to_dict())
     except SQLAlchemyError as err:
         db.session.rollback()
-        raise BadRequest()
+        raise BadRequest("Create movie fail!")
 
 @movie_api.route("/movies/<string:id>", methods=["PATCH"])
 @cross_origin()
+@requires_auth(permission="update:movie")
 def update_movie(id):
     try:
         movie = Movie.query.filter(Movie.id == id).first()
@@ -60,21 +72,46 @@ def update_movie(id):
         return jsonify(movie.to_dict())
     except SQLAlchemyError as err:
         db.session.rollback()
-        raise BadRequest()
+        raise BadRequest("Update movie fail!")
 
 @movie_api.route("/movies/<string:id>", methods=["DELETE"])
 @cross_origin()
+@requires_auth(permission="delete:movie")
 def delete_movie(id):
     try:
         movie = Movie.query.filter(Movie.id == id).first()
         if not movie:
-            raise NotFound()
+            raise NotFound(f"Not found movie with id:{id}")
         db.session.delete(movie)
         db.session.commit()
         return jsonify({})
     except SQLAlchemyError as err:
         db.session.rollback()
-        raise BadRequest()
+        raise BadRequest("Delete movie fail")
+
+@movie_api.route("/movies/<string:movie_id>/actors/<string:actor_id>", methods=["POST"])
+@cross_origin()
+@requires_auth(permission="update:movie")
+def add_actor_to_movie(movie_id, actor_id):
+    try:
+        movie = Movie.query.filter(Movie.id == movie_id).first()
+        if not movie:
+            raise NotFound(f"Not found movie with id:{movie_id}")
+        actor = Actor.query.filter(Actor.id == actor_id).first()
+        if not actor:
+            raise NotFound(f"Not found actor with id:{actor_id}")
+
+        assistant = Assistant()
+        assistant.movie_id = movie_id,
+        assistant.actor_id = actor_id
+
+        db.session.add(assistant)
+        db.session.commit()
+        return jsonify({})
+    except SQLAlchemyError as err:
+        db.session.rollback()
+        raise BadRequest("Add actor fail!!")
+
 
 @movie_api.errorhandler(HTTPException)
 def handle_exception(e):

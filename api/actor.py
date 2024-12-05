@@ -5,6 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound, HTTPException
 
 from models import Actor, db
+from api.decorator import requires_auth
+
 actor_api = Blueprint("actor", __name__)
 
 @actor_api.after_request
@@ -15,6 +17,7 @@ def after_request(response):
 
 @actor_api.route("/actors", methods=["GET"])
 @cross_origin()
+@requires_auth(permission="read:actor")
 def get_all_actors():
     list_actors = []
     actors = Actor.query.all()
@@ -24,6 +27,7 @@ def get_all_actors():
 
 @actor_api.route("/actors", methods=["POST"])
 @cross_origin()
+@requires_auth(permission="create:actor")
 def create_actor():
     try:
         request_body = request.get_json()
@@ -38,10 +42,11 @@ def create_actor():
         return jsonify(actor.to_dict())
     except SQLAlchemyError as err:
         db.session.rollback()
-        raise BadRequest()
+        raise BadRequest("Create new actor fail!!!")
 
 @actor_api.route("/actors/<string:id>", methods=["PATCH"])
 @cross_origin()
+@requires_auth(permission="update:actor")
 def update_actor(id):
     try:
         actor = Actor.query.filter(Actor.id == id).first()
@@ -60,10 +65,11 @@ def update_actor(id):
         return jsonify(actor.to_dict())
     except SQLAlchemyError as err:
         db.session.rollback()
-        raise BadRequest()
+        raise BadRequest("Update actor fail!!!")
 
 @actor_api.route("/actors/<string:id>", methods=["DELETE"])
 @cross_origin()
+@requires_auth(permission="delete:actor")
 def delete_actor(id):
     try:
         actor = Actor.query.filter(Actor.id == id).first()
@@ -74,19 +80,16 @@ def delete_actor(id):
         return jsonify({})
     except SQLAlchemyError as err:
         db.session.rollback()
-        raise BadRequest()
+        raise BadRequest("Delete actor fail")
 
 # as a decorator
 @actor_api.errorhandler(HTTPException)
 def handle_exception(e):
     """Return JSON instead of HTML for HTTP errors."""
     # start with the correct headers and status code from the error
-    response = e.get_response()
     # replace the body with JSON
-    response.data = jsonify({
+    return jsonify({
         "code": e.code,
         "name": e.name,
         "description": e.description,
     })
-    response.content_type = "application/json"
-    return response

@@ -2,22 +2,20 @@ import json
 from urllib.request import urlopen
 from functools import wraps
 from os import environ as env
+
 from dotenv import load_dotenv
 from flask import request
 from jose import jwt
 from jose.exceptions import JWTClaimsError, ExpiredSignatureError
 
-from werkzeug.exceptions import Unauthorized, Forbidden
+from werkzeug.exceptions import Unauthorized, Forbidden, HTTPException
 
-
-# Get Auth0 environment variables
 load_dotenv()
-app_secret_key = env["APP_SECRET_KEY"]
+# Get Auth0 environment variables
 auth0_domain = env["AUTH0_DOMAIN"]
 auth0_client_id = env["AUTH0_CLIENT_ID"]
 auth0_client_secret = env["AUTH0_CLIENT_SECRET"]
-api_audience = env["API_AUDIENCE"]
-
+auth0_audience = env["AUTH0_AUDIENCE"]
 
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
@@ -28,7 +26,7 @@ def requires_auth(permission=''):
                 payload = _verify_token_auth(token)
                 _check_permission(permission, payload)
                 return f(*args, **kwargs)
-            except Exception as e:
+            except HTTPException as e:
                 raise e
         return decorated_function
     return requires_auth_decorator
@@ -64,7 +62,7 @@ def _verify_token_auth(token):
         try:
             payload = jwt.decode(token, rsa_key,
                                  algorithms=["RS256"],
-                                 audience=api_audience,
+                                 audience=auth0_audience,
                                  issuer='https://' + auth0_domain + '/')
             return payload
         except ExpiredSignatureError:

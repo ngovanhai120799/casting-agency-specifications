@@ -1,19 +1,10 @@
-import os
-
 from flask import Flask
 from flask_cors import CORS
-from flask_migrate import Migrate
-from dotenv import load_dotenv
 
-from models import setup_db, db
+from models import setup_db
 from api.actor import actor_api
 from api.movie import movie_api
-
-load_dotenv()
-db_username = os.environ["DB_USERNAME"]
-db_password = os.environ["DB_PASSWORD"]
-db_name = os.environ["DB_NAME"]
-sqlalchemy_database_uri = f"postgresql+psycopg2://{db_username}:{db_password}@127.0.0.1:5432/{db_name}"
+from api.auth import auth
 
 
 
@@ -24,7 +15,9 @@ def create_app():
 
     app.register_blueprint(actor_api)
     app.register_blueprint(movie_api)
-    setup_db(app, sqlalchemy_database_uri)
+    app.register_blueprint(auth)
+
+    setup_db(app)
     return app
 
 if __name__ == '__main__':
