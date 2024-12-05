@@ -33,8 +33,8 @@ class Assistant(db.Model):
     __tablename__ = "assistants"
     movie_id: Mapped[str] = mapped_column(ForeignKey("movies.id"), primary_key=True)
     actor_id: Mapped[str] = mapped_column(ForeignKey("actors.id"), primary_key=True)
-    actor: Mapped["Actor"] = relationship(back_populates="movies")
-    movie: Mapped["Movie"] = relationship(back_populates="actors")
+    actor: Mapped["Actor"] = relationship(back_populates="movies", lazy="joined")
+    movie: Mapped["Movie"] = relationship(back_populates="actors", lazy="joined")
 
     def to_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
@@ -46,7 +46,7 @@ class Actor(db.Model):
     name: Mapped[str] = mapped_column(String, nullable=False)
     age: Mapped[int] = mapped_column(Integer)
     gender: Mapped[str] = mapped_column(String)
-    movies: Mapped[List["Assistant"]] = relationship(back_populates="actor")
+    movies: Mapped[List["Assistant"]] = relationship(back_populates="actor", lazy="joined", cascade="all, delete")
     def to_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
 
@@ -56,7 +56,7 @@ class Movie(db.Model):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     release_date: Mapped[str] = mapped_column(String)
-    actors: Mapped[List["Assistant"]] = relationship(back_populates="movie")
+    actors: Mapped[List["Assistant"]] = relationship(back_populates="movie", lazy="joined", cascade="all, delete")
 
     def to_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
