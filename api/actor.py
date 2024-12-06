@@ -1,7 +1,10 @@
+import json
+
 import ulid
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug import Response
 from werkzeug.exceptions import BadRequest, NotFound, HTTPException
 
 from models import Actor, db
@@ -51,7 +54,7 @@ def update_actor(id):
     try:
         actor = Actor.query.filter(Actor.id == id).first()
         if not actor:
-            raise NotFound()
+            raise NotFound(f"Not found actor with id: {id}")
 
         request_body = request.get_json()
         if request_body.get("name"):
@@ -74,7 +77,7 @@ def delete_actor(id):
     try:
         actor = Actor.query.filter(Actor.id == id).first()
         if not actor:
-            raise NotFound()
+            raise NotFound(f"Not found actor with id: {id}")
         db.session.delete(actor)
         db.session.commit()
         return jsonify({})
@@ -82,14 +85,18 @@ def delete_actor(id):
         db.session.rollback()
         raise BadRequest("Delete actor fail")
 
-# as a decorator
+
 @actor_api.errorhandler(HTTPException)
 def handle_exception(e):
     """Return JSON instead of HTML for HTTP errors."""
     # start with the correct headers and status code from the error
+    response: Response = e.get_response()
+    response.status = e.code
     # replace the body with JSON
-    return jsonify({
+    response.data = json.dumps({
         "code": e.code,
         "name": e.name,
         "description": e.description,
     })
+    response.content_type = "application/json"
+    return response

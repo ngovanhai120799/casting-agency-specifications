@@ -1,9 +1,12 @@
+import json
 from datetime import datetime, timedelta
+from typing import List
 
 import ulid
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug import Response
 from werkzeug.exceptions import BadRequest, NotFound, HTTPException
 
 from api.decorator import requires_auth
@@ -25,12 +28,10 @@ def get_all_movies():
     list_movies = []
     movies = Movie.query.all()
     for movie in movies:
-        actors = [assistant.actor.to_dict() for assistant in movie.actors]
         response = {
             "id": movie.id,
             "title": movie.title,
             "release_date": movie.release_date,
-            "actors": actors
         }
         list_movies.append(response)
     return jsonify(list_movies)
@@ -97,6 +98,13 @@ def add_actor_to_movie(movie_id, actor_id):
         movie = Movie.query.filter(Movie.id == movie_id).first()
         if not movie:
             raise NotFound(f"Not found movie with id:{movie_id}")
+
+        list_actors: List[dict] = []
+        for assistant in movie.actors:
+            if assistant.actor_id == actor_id:
+                raise BadRequest("The actor is in the movie!!")
+            list_actors.append(assistant.actor.to_dict())
+
         actor = Actor.query.filter(Actor.id == actor_id).first()
         if not actor:
             raise NotFound(f"Not found actor with id:{actor_id}")
@@ -107,7 +115,10 @@ def add_actor_to_movie(movie_id, actor_id):
 
         db.session.add(assistant)
         db.session.commit()
-        return jsonify({})
+        return jsonify({
+            **movie.to_dict(),
+            "actors": [*list_actors, actor.to_dict()]
+        })
     except SQLAlchemyError as err:
         db.session.rollback()
         raise BadRequest("Add actor fail!!")
@@ -117,9 +128,10 @@ def add_actor_to_movie(movie_id, actor_id):
 def handle_exception(e):
     """Return JSON instead of HTML for HTTP errors."""
     # start with the correct headers and status code from the error
-    response = e.get_response()
+    response: Response = e.get_response()
+    response.status = e.code
     # replace the body with JSON
-    response.data = jsonify({
+    response.data = json.dumps({
         "code": e.code,
         "name": e.name,
         "description": e.description,
