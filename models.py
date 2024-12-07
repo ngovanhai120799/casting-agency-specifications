@@ -9,9 +9,8 @@ from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
 
 load_dotenv()
 db_username = env["DB_USERNAME"]
-db_password = env["DB_PASSWORD"]
 db_name = env["DB_NAME"]
-sqlalchemy_database_uri = f"postgresql+psycopg2://{db_username}:{db_password}@127.0.0.1:5432/{db_name}"
+sqlalchemy_database_uri = f"postgresql+psycopg2://{db_username}@127.0.0.1:5432/{db_name}"
 
 
 class Base(DeclarativeBase):

@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "5b528487-218a-44f2-838a-fb83a08e15b7",
+		"_postman_id": "016bbe6f-7ece-4afb-a4dd-68ac0882f8ff",
 		"name": "api",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "31223101"
+		"_exporter_id": "24669231"
 	},
 	"item": [
 		{
@@ -188,16 +188,6 @@
 							"response": []
 						}
 					],
-					"auth": {
-						"type": "bearer",
-						"bearer": [
-							{
-								"key": "token",
-								"value": "\"\"",
-								"type": "string"
-							}
-						]
-					},
 					"event": [
 						{
 							"listen": "prerequest",
@@ -403,16 +393,6 @@
 							"response": []
 						}
 					],
-					"auth": {
-						"type": "bearer",
-						"bearer": [
-							{
-								"key": "token",
-								"value": "\"\"",
-								"type": "string"
-							}
-						]
-					},
 					"event": [
 						{
 							"listen": "prerequest",
@@ -438,7 +418,14 @@
 				}
 			],
 			"auth": {
-				"type": "bearer"
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{assistant_token}}",
+						"type": "string"
+					}
+				]
 			},
 			"event": [
 				{
@@ -800,7 +787,14 @@
 				}
 			],
 			"auth": {
-				"type": "bearer"
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{director_token}}",
+						"type": "string"
+					}
+				]
 			},
 			"event": [
 				{
@@ -1166,7 +1160,7 @@
 				"bearer": [
 					{
 						"key": "token",
-						"value": "\"\"",
+						"value": "{{productor_token}}",
 						"type": "string"
 					}
 				]
@@ -1227,13 +1221,18 @@
 			"type": "string"
 		},
 		{
-			"key": "actor_id",
-			"value": "",
+			"key": "assistant_token",
+			"value": "assistant_token",
 			"type": "string"
 		},
 		{
-			"key": "movie_id",
-			"value": "",
+			"key": "director_token",
+			"value": "director_token",
+			"type": "string"
+		},
+		{
+			"key": "productor_token",
+			"value": "productor_token",
 			"type": "string"
 		}
 	]

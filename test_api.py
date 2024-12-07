@@ -23,7 +23,6 @@ patch("api.decorator.requires_auth", mock_decorator).start()
 class TestApi(unittest.TestCase):
     os.environ["DB_USERNAME"] = "postgres"
     os.environ["DB_NAME"] = "app"
-    os.environ["DB_PASSWORD"] = "1234567890"
 
     """This class represents the app test case"""
     def setUp(self):
@@ -66,11 +65,19 @@ class TestApi(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), [self.actor])
 
+    def test_get_actor_by_id(self):
+        response = self.client.get(f"/actors/{self.actor.get("id")}", follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_actor_by_id(self):
+        response = self.client.get(f"/movies/{self.movie.get("id")}", follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
     def test_update_actor(self):
         id = self.actor.get("id")
-        response = self.client.patch(f"/actors/{id}", json={"name": "name_updated"})
+        response = self.client.patch(f"/actors/{id}", json={ "name": "Amazon Cloudformation"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json()["name"], "name_updated")
+        self.assertEqual(response.get_json()["name"], "Amazon Cloudformation")
 
     def test_update_actor_fail(self):
         id = "wrong_test_id"
@@ -88,6 +95,7 @@ class TestApi(unittest.TestCase):
 
         response = self.client.post(f"movies/{movie_id}/actors/{actor_id}",
                                     follow_redirects=True)
+        print(response.get_json())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json().get("actors"), [self.actor])
 

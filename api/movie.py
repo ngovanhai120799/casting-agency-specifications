@@ -123,6 +123,20 @@ def add_actor_to_movie(movie_id, actor_id):
         db.session.rollback()
         raise BadRequest("Add actor fail!!")
 
+@movie_api.route("/movies/<string:id>", methods=["GET"])
+@cross_origin()
+@requires_auth(permission="read:movies")
+def get_movie_by_id(id):
+    movie = Movie.query.filter(Movie.id == id).first()
+    if not movie:
+        raise NotFound(f"Not found actor with id: {id}")
+    list_actors = []
+    for assistant in movie.actors:
+        list_actors.append(assistant.actors.to_dict())
+    return jsonify({
+        **movie.to_dict(),
+        "actors": [*list_actors]
+    })
 
 @movie_api.errorhandler(HTTPException)
 def handle_exception(e):

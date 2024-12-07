@@ -85,6 +85,20 @@ def delete_actor(id):
         db.session.rollback()
         raise BadRequest("Delete actor fail")
 
+@actor_api.route("/actors/<string:id>", methods=["GET"])
+@cross_origin()
+@requires_auth(permission="read:actor")
+def get_actor_by_id(id):
+    actor = Actor.query.filter(Actor.id == id).first()
+    if not actor:
+        raise NotFound(f"Not found actor with id: {id}")
+    list_movies = []
+    for assistant in actor.movies:
+        list_movies.append(assistant.movie.to_dict())
+    return jsonify({
+        **actor.to_dict(),
+        "movies": [*list_movies]
+    })
 
 @actor_api.errorhandler(HTTPException)
 def handle_exception(e):
