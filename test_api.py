@@ -27,7 +27,7 @@ class TestApi(unittest.TestCase):
 
     """This class represents the app test case"""
     def setUp(self):
-        from app import create_app
+        from main import create_app
         self.app = create_app()
         self.app_ctxt = self.app.app_context()
         self.app_ctxt.push()

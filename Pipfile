@@ -14,6 +14,7 @@ python-dotenv = "*"
 cryptography = "*"
 auth0-python = "*"
 python-jose = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.12"
